@@ -1,57 +1,44 @@
+# SPDX-License-Identifier: GPL-2.0-only
 #
 # Copyright (C) 2017-2020 Yousong Zhou <yszhou4tech@gmail.com>
-#
-# Copyright (C) 2021 ImmortalWrt
-# <https://immortalwrt.org>
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# Copyright (C) 2021 ImmortalWrt.org
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadowsocks-rust
-PKG_VERSION:=1.11.1
+PKG_VERSION:=1.14.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_HEADER:=shadowsocks-v$(PKG_VERSION)
 PKG_SOURCE_BODY:=unknown-linux-musl
 PKG_SOURCE_FOOTER:=tar.xz
-PKG_SOURCE_URL:=https://github.com/shell-script/openwrt-shadowsocks-rust/releases/download/v$(PKG_VERSION)/
+PKG_SOURCE_URL:=https://github.com/shadowsocks/shadowsocks-rust/releases/download/v$(PKG_VERSION)/
 
 ifeq ($(ARCH),aarch64)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).aarch64-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=fc444f1ef77478f8eb192fa481fceaa67c26672cce4a08873c0031a6885acaf1
+  PKG_HASH:=5d32ddc457e1640710b1cb0921b91dbda256c060c3b1db695f2222dd2780949c
 else ifeq ($(ARCH),arm)
   # Referred to golang/golang-values.mk
   ARM_CPU_FEATURES:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
   ifeq ($(ARM_CPU_FEATURES),)
     PKG_SOURCE:=$(PKG_SOURCE_HEADER).arm-$(PKG_SOURCE_BODY)eabi.$(PKG_SOURCE_FOOTER)
-    PKG_HASH:=283afa19deca0e3b94d11f397f42e96896869fe6eb596aab8598c433ceff1a1f
-  else ifneq ($(filter $(ARM_CPU_FEATURES),vfp vfpv2),)
-    PKG_SOURCE:=$(PKG_SOURCE_HEADER).arm-$(PKG_SOURCE_BODY)eabihf.$(PKG_SOURCE_FOOTER)
-    PKG_HASH:=f1a7eddadab1154f003f070c8bda50249d155b66118d0f878874de0e317be61d
+    PKG_HASH:=0fed8788c9ac66f87fe0b63c134a34e96d10748dfd9d5a9bb4ee3cbebf745f6f
   else
-    PKG_SOURCE:=$(PKG_SOURCE_HEADER).armv7-$(PKG_SOURCE_BODY)eabihf.$(PKG_SOURCE_FOOTER)
-    PKG_HASH:=601d222235d9acdb021b9e56d0b1d8c3f42a9f8f2f10e7a4202bd2b7d1ec6ca2
+    PKG_SOURCE:=$(PKG_SOURCE_HEADER).arm-$(PKG_SOURCE_BODY)eabihf.$(PKG_SOURCE_FOOTER)
+    PKG_HASH:=1906cd2c1fdc88db930067bf151e627f050175e2f7e8d23212ec80c3c3cda3ab
   endif
 else ifeq ($(ARCH),i386)
-  ifeq ($(CONFIG_TARGET_x86_geode)$(CONFIG_TARGET_x86_legacy),y)
-    PKG_SOURCE:=$(PKG_SOURCE_HEADER).i586-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-    PKG_HASH:=1e287d20ef49da3ac2524419fc17dbe5901a5b685c7828cdc60a98612d5209b0
-  else
-    PKG_SOURCE:=$(PKG_SOURCE_HEADER).i686-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-    PKG_HASH:=4722217879f45f0591bdf758cec68025610d53c50613ed774dda91be166b25bb
-  endif
+  PKG_SOURCE:=$(PKG_SOURCE_HEADER).i686-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
+  PKG_HASH:=acab77fd9a471297a3f35640ead76c160620c92a809613c4a408d6a66f1aa8c9
 else ifeq ($(ARCH),mips)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).mips-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=37aee9ba582f7ff4aceb020d02e87e8ba4f3568c4ec55275090270be090f4f28
+  PKG_HASH:=03b26dd9cc23ef21acc2023fe97b563ca4388f9e50aba528d69b0ced9244cf68
 else ifeq ($(ARCH),mipsel)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).mipsel-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=3c80c7307f1e779f305ea6519f6e3f5a6ed60115e172d917f6326839eaeb56f3
+  PKG_HASH:=7f2d05a752309b2df0ce3f0bf1dd03c079283cad80f9f5db23204a786b32df88
 else ifeq ($(ARCH),x86_64)
   PKG_SOURCE:=$(PKG_SOURCE_HEADER).x86_64-$(PKG_SOURCE_BODY).$(PKG_SOURCE_FOOTER)
-  PKG_HASH:=7efa33113a2b1910ef69076961e757f738ac89e1ddf6670499e150d2cdd8a4d2
+  PKG_HASH:=2fe77cb42d78218eac5b3c2db346f4d58f8e11ef83aaffb087183109ee184ac7
 # Set the default value to make OpenWrt Package Checker happy
 else
   PKG_SOURCE:=dummy
@@ -73,7 +60,7 @@ define Package/shadowsocks-rust/Default
     SUBMENU:=Web Servers/Proxies
     TITLE:=shadowsocks-rust $(1)
     URL:=https://github.com/shadowsocks/shadowsocks-rust
-    DEPENDS:=@(aarch64||arm||i386||mips||mipsel||x86_64) @USE_MUSL
+    DEPENDS:=@USE_MUSL @(aarch64||arm||i386||mips||mipsel||x86_64) @!(TARGET_x86_geode||TARGET_x86_legacy)
   endef
 
   define Package/shadowsocks-rust-$(1)/install
@@ -82,7 +69,7 @@ define Package/shadowsocks-rust/Default
   endef
 endef
 
-SHADOWSOCKS_COMPONENTS:=sslocal ssmanager ssserver ssurl
+SHADOWSOCKS_COMPONENTS:=sslocal ssmanager ssserver ssurl ssservice
 define shadowsocks-rust/templates
   $(foreach component,$(SHADOWSOCKS_COMPONENTS),
     $(call Package/shadowsocks-rust/Default,$(component))
